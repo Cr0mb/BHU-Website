@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Black Hats Under Ground</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}" />
+
+  <style>
+    /* Fix for markdown embedded links inside membersContent */
+    #membersContent a {
+      color: var(--color-glitch-cyan);
+      text-decoration: underline;
+      transition: color var(--transition-speed);
+    }
+    html[data-theme='dark'] #membersContent a:hover,
+    html[data-theme='dark'] #membersContent a:focus {
+      color: var(--color-glitch-magenta);
+      text-shadow: 0 0 8px var(--color-glitch-magenta);
+      outline: none;
+    }
+    html[data-theme='light'] #membersContent a {
+      color: var(--color-text-light);
+    }
+    html[data-theme='light'] #membersContent a:hover,
+    html[data-theme='light'] #membersContent a:focus {
+      color: var(--color-button-hover-light);
+      text-shadow: none;
+      outline: none;
+    }
+
+    /* Container layout */
+    body {
+      margin: 0;
+      font-family: 'Consolas', monospace, monospace;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      overflow-x: hidden;
+    }
+    main.container {
+      position: relative;
+      z-index: 10;
+      max-width: 960px;
+      margin: 3rem auto 6rem;
+      padding: 1rem;
+      background: var(--color-bg-secondary);
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+    }
+
+    /* Background video */
+    #bg-video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      filter: brightness(0.35) contrast(1.2);
+      user-select: none;
+      pointer-events: none;
+    }
+
+	.button-group {
+	  position: fixed;
+	  top: 0;
+	  left: 0;
+	  right: 0;
+	  margin: 0;
+	  padding: 0;
+	  z-index: 1000;
+	  background-color: rgba(0, 0, 0, 0.85);
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+	  gap: 1rem;
+	  backdrop-filter: blur(10px);
+	  border-bottom: 1px solid var(--color-glitch-magenta);
+	}
+
+    button.button {
+      background-color: var(--color-button-bg);
+      color: var(--color-button-text);
+      border: none;
+      padding: 0.6rem 1.2rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      box-shadow: var(--shadow-button);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    button.button:hover,
+    button.button:focus {
+      background-color: var(--color-button-hover);
+      outline: none;
+      color: var(--color-button-text-hover);
+      box-shadow: 0 0 8px var(--color-glitch-magenta);
+    }
+
+    /* Unmute button styling */
+    #unmuteBtn {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 20;
+      background-color: var(--color-button-bg);
+      color: var(--color-button-text);
+      border: none;
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: var(--shadow-button);
+      transition: background-color 0.3s ease;
+    }
+    #unmuteBtn:hover,
+    #unmuteBtn:focus {
+      background-color: var(--color-button-hover);
+      outline: none;
+      color: var(--color-button-text-hover);
+      box-shadow: 0 0 8px var(--color-glitch-cyan);
+    }
+
+    /* Sections */
+    section.extra-info {
+      margin-top: 2rem;
+      background: var(--color-bg-secondary-alt);
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-section);
+    }
+
+    /* Minecraft info list styling */
+    #minecraftInfo ul {
+      padding-left: 1.2rem;
+      list-style-type: disc;
+    }
+
+    /* Retry button for members fetch */
+    #retryMembersBtn {
+      margin-top: 1rem;
+      background-color: var(--color-glitch-magenta);
+      border: none;
+      padding: 0.5rem 1rem;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--color-glitch-magenta);
+      transition: background-color 0.3s ease;
+    }
+    #retryMembersBtn:hover,
+    #retryMembersBtn:focus {
+      background-color: var(--color-glitch-cyan);
+      outline: none;
+      box-shadow: 0 0 10px var(--color-glitch-cyan);
+    }
+  </style>
+</head>
+<body>
+
+
+  <nav class="button-group" aria-label="Main navigation buttons">
+    <button class="button" id="discordBtn" aria-controls="discordInfo" aria-expanded="false">Join the Discord</button>
+    <button class="button" id="membersBtn" aria-controls="membersInfo" aria-expanded="false">Show GitHub Members Directory</button>
+    <button class="button" id="minecraftBtn" aria-controls="minecraftInfo" aria-expanded="false">Show Minecraft Server Info</button>
+    <button class="button" id="raptorBtn" aria-controls="raptorInfo" aria-expanded="false">Show RaptorBytes Info</button>
+    <button class="button" id="toggleThemeBtn" aria-pressed="false">Toggle Dark Mode</button>
+  </nav>
+ 
+  <button id="toggleThemeBtn" aria-pressed="false" title="Toggle Theme">
+    🌓
+  </button>
+
+
+  <!-- Background Video -->
+  <video id="bg-video" autoplay muted loop playsinline>
+    <source src="{{ url_for('static', filename='videos/bg_video.mp4') }}" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <button id="unmuteBtn" aria-pressed="false" aria-label="Unmute background video sound">Unmute Sound</button>
+  
+  <section class="terminal-window">
+    <div class="terminal-header">
+      <div class="terminal-controls">
+        <span class="control close"></span>
+        <span class="control minimize"></span>
+        <span class="control maximize"></span>
+      </div>
+      <span class="terminal-brand">Black Hats Under Ground</span>
+      <span class="terminal-title">root@bhu:~$</span>
+    </div>
+    <div class="terminal-body">
+      <div class="terminal-line">
+        <span class="prompt">root@bhu:~$</span>
+        <span class="command">whoami</span>
+      </div>
+      <div class="terminal-line">
+        <span class="output">BlackHat_Underground</span>
+      </div>
+      <div class="terminal-line">
+        <span class="prompt">root@bhu:~$</span>
+        <span class="command">cat /etc/motd</span>
+      </div>
+      <div class="terminal-line">
+        <span class="output">Welcome to the Underground</span>
+      </div>
+      <div class="terminal-line">
+        <span class="prompt">root@bhu:~$</span>
+        <span class="command typing">hack_the_planet</span><span class="cursor">|</span>
+      </div>
+    </div>
+  </section>
+
+
+
+  <main class="container" role="main" tabindex="-1">
+    <h1> </h1>
+    <p>Welcome to <strong>Black Hats Under Ground</strong>, a cutting-edge community for hackers, coders, and cybersecurity minds.</p>
+	
+  
+    <!-- Discord Info -->
+    <section id="discordInfo" class="extra-info" hidden aria-live="polite" tabindex="0">
+      <h2>Discord Server Info</h2>
+      <p>Our Discord is the hub for hacking, coding, and deep technical collaboration.</p>
+      <a href="https://bhu.root.sx" target="_blank" rel="noopener noreferrer" class="button">Join Discord</a>
+    </section>
+
+    <!-- Markdown GitHub Members Info -->
+    <section id="membersInfo" class="extra-info" hidden aria-live="polite" tabindex="0">
+      <h2>GitHub Members Directory</h2>
+      <p>
+        Explore the latest list of active Black Hats Under Ground members on GitHub. This directory updates automatically from our GitHub organization.
+      </p>
+      <div id="membersContent" aria-live="polite" aria-busy="false" tabindex="0">
+        <em>Loading GitHub members...</em>
+      </div>
+      <button id="retryMembersBtn" class="button" hidden>Retry Loading</button>
+    </section>
+
+	<!-- Minecraft Info -->
+	<section id="minecraftInfo" class="extra-info" hidden aria-live="polite" tabindex="0">
+	  <h2 style="margin-bottom: 8px;">Minecraft Server Info</h2>
+	  <p style="margin: 0 0 12px 0; font-size: 16px; line-height: 1.5;">
+		<strong>Server IP:</strong> <code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 4px;">blackhats.root.sx</code><br>
+		<span style="font-style: italic;">1.21.x Survival Economy Server with anti-cheat protection</span>
+	  </p>
+	  <ul style="padding-left: 20px; margin-bottom: 16px;">
+		<li>No hacks or exploits allowed</li>
+		<li>Player-run economy</li>
+		<li>Events focused on coding and hacking mastery</li>
+		<li style="margin-top: 10px;">
+		  <a href="https://blackhats.home.kg/" target="_blank" rel="noopener noreferrer"
+			 style="display: inline-block; padding: 10px 16px; background-color: #00ffff; color: #000; font-weight: bold; border: none; border-radius: 6px; text-decoration: none; transition: background-color 0.3s ease;"
+			 onmouseover="this.style.backgroundColor='#1affff'"
+			 onmouseout="this.style.backgroundColor='#00ffff'">
+			🌍 View the Live World Map
+		  </a>
+		</li>
+	  </ul>
+	</section>
+
+
+
+
+    <!-- RaptorBytes Info -->
+    <section id="raptorInfo" class="extra-info" hidden aria-live="polite" tabindex="0">
+      <h2>RaptorBytes Info</h2>
+      <p>Welcome to RaptorBytes, a small, independent web space built for experiments, fun projects, and a little bit of humor. Dive into our collection of tech projects and curated memes.</p>
+      <a href="https://raptorbytes.org/" target="_blank" class="button" rel="noopener noreferrer">Visit RaptorBytes</a>
+      <a href="https://discord.gg/Ud7AgmaV8G" target="_blank" class="button" rel="noopener noreferrer">Join Discord</a>
+      <a href="https://github.com/Raptorbytes" target="_blank" class="button" rel="noopener noreferrer">GitHub</a>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const video = document.getElementById('bg-video');
+      const unmuteBtn = document.getElementById('unmuteBtn');
+      const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+      const themeStorageKey = 'bhu-theme';
+
+      const sections = [
+        { btnId: 'discordBtn', sectionId: 'discordInfo' },
+        { btnId: 'membersBtn', sectionId: 'membersInfo' },
+        { btnId: 'minecraftBtn', sectionId: 'minecraftInfo' },
+        { btnId: 'raptorBtn', sectionId: 'raptorInfo' }
+      ];
+
+	  function closeAllSections() {
+	    sections.forEach(({ btnId, sectionId }) => {
+		  const btn = document.getElementById(btnId);
+		  const sec = document.getElementById(sectionId);
+		  if (sec) {
+		    sec.setAttribute('hidden', true);
+		  }
+		  btn.setAttribute('aria-expanded', 'false');
+	    });
+	  }
+
+
+      sections.forEach(({ btnId, sectionId }) => {
+        const button = document.getElementById(btnId);
+        const section = document.getElementById(sectionId);
+        button.addEventListener('click', () => {
+          const isHidden = section.hasAttribute('hidden');
+          closeAllSections();
+          if (isHidden) {
+            section.removeAttribute('hidden');
+            button.setAttribute('aria-expanded', 'true');
+            section.focus();
+          }
+        });
+      });
+
+      unmuteBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        unmuteBtn.textContent = video.muted ? 'Unmute Sound' : 'Mute Sound';
+        unmuteBtn.setAttribute('aria-pressed', String(!video.muted));
+      });
+
+      function applyTheme(theme) {
+        if (theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          toggleThemeBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          toggleThemeBtn.setAttribute('aria-pressed', 'false');
+        }
+      }
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        localStorage.setItem(themeStorageKey, newTheme);
+      }
+      toggleThemeBtn.addEventListener('click', toggleTheme);
+
+      const savedTheme = localStorage.getItem(themeStorageKey);
+      if (savedTheme) {
+        applyTheme(savedTheme);
+      } else {
+        applyTheme('dark');
+      }
+
+      // Load GitHub members directory on demand
+      const membersBtn = document.getElementById('membersBtn');
+      const membersContent = document.getElementById('membersContent');
+      const retryMembersBtn = document.getElementById('retryMembersBtn');
+
+      function fetchMembers() {
+        membersContent.setAttribute('aria-busy', 'true');
+        membersContent.innerHTML = '<em>Loading GitHub members...</em>';
+        retryMembersBtn.hidden = true;
+
+        fetch('{{ url_for("members_raw") }}')
+          .then(res => {
+            if (!res.ok) throw new Error('Network error');
+            return res.text();
+          })
+          .then(html => {
+            membersContent.innerHTML = html;
+            membersContent.dataset.loaded = "true";
+            membersContent.setAttribute('aria-busy', 'false');
+          })
+          .catch(() => {
+            membersContent.innerHTML = '<p style="color: var(--color-glitch-magenta); font-weight: bold;">Failed to load member directory.</p>';
+            retryMembersBtn.hidden = false;
+            membersContent.setAttribute('aria-busy', 'false');
+          });
+      }
+
+      membersBtn.addEventListener('click', () => {
+        if (!membersContent.dataset.loaded) {
+          fetchMembers();
+        }
+      });
+
+      retryMembersBtn.addEventListener('click', fetchMembers);
+
+    })();
+  </script>
+</body>
+</html>
